@@ -14,9 +14,9 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+# Load environment variables from .env
 from dotenv import load_dotenv
 
-# Load environment variables from .env
 load_dotenv()
 
 
@@ -60,7 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Register your custom middleware
+    # Middleware to enforce authentication for all requests except specified URLs
     "account.middleware.AuthMiddleware",
 ]
 
@@ -91,11 +91,11 @@ WSGI_APPLICATION = "taskFlow.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "TaskFlow",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "localhost",  # Set to '127.0.0.1' or your server IP
-        "PORT": "5432",  # Default PostgreSQL port
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "PORT": os.getenv("DATABASE_PORT"),
     }
 }
 
@@ -142,24 +142,28 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Custome Auth User Model
+# Custom Authentication User Model
 AUTH_USER_MODEL = "account.CustomUser"
 
 
 # JWT Authentication
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
+
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=3),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=10),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME_MIN"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        hours=int(os.getenv("REFRESH_TOKEN_LIFETIME_HRS"))
+    ),
+    "ROTATE_REFRESH_TOKENS": os.getenv("ROTATE_REFRESH_TOKENS"),
+    "BLACKLIST_AFTER_ROTATION": os.getenv("BLACKLIST_AFTER_ROTATION"),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
@@ -168,7 +172,7 @@ SIMPLE_JWT = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",  # Update if Redis runs on a different port
+        "LOCATION": os.getenv("RESISH_LOCATION"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },

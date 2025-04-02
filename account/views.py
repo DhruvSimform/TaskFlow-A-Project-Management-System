@@ -3,6 +3,7 @@
 # Create your views here.
 import datetime
 
+# from django.conf import settings
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,6 +12,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 
 class CustomTokenRefreshView(TokenRefreshView):
+    """Handles token refresh requests and checks if the refresh token is blacklisted."""
+
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get("refresh", None)
 
@@ -24,14 +27,18 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 
 class LogoutView(APIView):
+    """
+    Handles blacklisting of access and refresh tokens during user logout to prevent further use of these tokens.
+    """
 
     def post(self, request):
         try:
-            auth_header = request.headers.get("Authorization")
+            auth_header = request.headers.get("Authorization", None)
 
-            if not auth_header:
+            if not auth_header or not auth_header.startswith("Bearer "):
                 return Response(
-                    {"error": "No token Provided"}, status=status.HTTP_404_NOT_FOUND
+                    {"error": "Invalid or missing Authorization header"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             access_token = auth_header.split(" ")[1]
@@ -39,14 +46,14 @@ class LogoutView(APIView):
             refresh_token = request.data.get("refresh", None)
 
             if refresh_token:
-                refresh_expiration = datetime.timedelta(days=7)
+                refresh_expiration = datetime.timedelta(hours=5)
                 cache.set(
                     refresh_token,
                     "blacklisted",
                     timeout=int(refresh_expiration.total_seconds()),
                 )
 
-            expiration_time = datetime.timedelta(minutes=5)
+            expiration_time = datetime.timedelta(minutes=60)
             cache.set(
                 access_token,
                 "blacklisted",

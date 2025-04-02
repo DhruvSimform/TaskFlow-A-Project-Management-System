@@ -10,7 +10,21 @@ from rest_framework.permissions import IsAuthenticated
 
 
 class AuthMiddleware(MiddlewareMixin):
+    """
+    Middleware to enforce user authentication for accessing URLs, except for predefined routes.
+    """
+
     def process_request(self, request):
+        """
+        Handles authentication and token validation for incoming requests.
+
+        This method checks if the request path is in the list of allowed routes that
+        do not require authentication. If the request contains an Authorization header
+        with a Bearer token, it validates the token and checks if it is blacklisted.
+        For unauthenticated users, it redirects to the login page for web/admin requests
+        or allows API requests to proceed without authentication.
+        """
+
         # Allow access to these routes without authentication
         allowed_routes = [
             "/api/account/login/",
@@ -18,6 +32,7 @@ class AuthMiddleware(MiddlewareMixin):
             "/api/account/token/refresh/",
             "/admin/login/",
         ]
+
         # Extract token from the Authorization header
         auth_header = request.headers.get("Authorization", "")
         token_match = re.match(r"Bearer (.+)", auth_header)
