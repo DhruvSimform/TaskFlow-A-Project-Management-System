@@ -17,6 +17,7 @@ repos:
         language: python
         types: [python]
         additional_dependencies: [isort]
+        args: ["--profile=black"]
 
       - id: flake8
         name: Flake8 Linter
