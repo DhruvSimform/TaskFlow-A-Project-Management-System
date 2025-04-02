@@ -83,13 +83,13 @@ WSGI_APPLICATION = "taskFlow.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',  
-        'NAME': 'TaskFlow',
-        'USER': 'postgres', 
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',                        # Set to '127.0.0.1' or your server IP
-        'PORT': '5432',                             # Default PostgreSQL port
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "TaskFlow",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "localhost",  # Set to '127.0.0.1' or your server IP
+        "PORT": "5432",  # Default PostgreSQL port
     }
 }
 
