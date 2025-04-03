@@ -38,8 +38,13 @@ class AuthMiddleware(MiddlewareMixin):
         token_match = re.match(r"Bearer (.+)", auth_header)
 
         if request.path in allowed_routes:
+            print("passed")
             return None  # Let the request pass without authentication
-
+            # Allow admin panel to use session authentication
+        if request.path.startswith("/admin/"):
+            return None
+        if not token_match:
+            return JsonResponse({"error": "Your Token is not provided"})
         if token_match:
             access_token = token_match.group(1)  # Extract token
 

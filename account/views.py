@@ -6,9 +6,12 @@ import datetime
 # from django.conf import settings
 from django.core.cache import cache
 from rest_framework import status
+from rest_framework.generics import UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenRefreshView
+
+from .serializers import UpdateUserPasswordSerializer
 
 
 class CustomTokenRefreshView(TokenRefreshView):
@@ -81,3 +84,24 @@ class Home(APIView):
                 },
             }
         )
+
+
+class ChangePasswordView(UpdateAPIView):
+    serializer_class = UpdateUserPasswordSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+
+        serializer = self.get_serializer(user, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(
+                {"message": "Your Password is changed successfully!"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

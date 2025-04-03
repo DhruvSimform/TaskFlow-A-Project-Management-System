@@ -14,4 +14,7 @@ urlpatterns = [
     # logout api to blacklit the access and refresh token
     path("logout/", views.LogoutView.as_view()),
     path("", views.Home.as_view(), name="home"),
+    path(
+        "change-password/", views.ChangePasswordView.as_view(), name="change_password"
+    ),
 ]
