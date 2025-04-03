@@ -87,6 +87,10 @@ class Home(APIView):
 
 
 class ChangePasswordView(UpdateAPIView):
+    """
+    Allows a logged-in user to change their password
+    """
+
     serializer_class = UpdateUserPasswordSerializer
 
     def get_object(self):
