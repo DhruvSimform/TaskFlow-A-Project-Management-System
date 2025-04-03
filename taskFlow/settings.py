@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "account",
+    "organization",
 ]
 
 
@@ -172,9 +173,33 @@ SIMPLE_JWT = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv("RESISH_LOCATION"),
+        "LOCATION": "redis://127.0.0.1:6379/6",  # Update this if Redis is on another host/port
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     }
 }
+
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Kolkata"
+
+# Prevent Django from launching Celery multiple times in development
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# Use Mailer for email queuing
+EMAIL_BACKEND = "mailer.backend.DbBackend"
+
+# Configure Email (SMTP example)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
