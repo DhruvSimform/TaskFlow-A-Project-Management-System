@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from organization.models import Department
+
 from .manager import CustomeUserManager
 
 
@@ -26,6 +28,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     role = models.CharField(choices=ROLE_CHOICES, max_length=15, default="DEVELOPER")
     profile_img = models.ImageField(upload_to="profile/", blank=True, null=True)
+
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employees",
+    )
 
     # Custom manager for email as username filed to use
     objects = CustomeUserManager()

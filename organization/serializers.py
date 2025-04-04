@@ -4,20 +4,34 @@ from rest_framework import serializers
 
 from account.models import CustomUser
 
+from .models import Department
 from .tasks import send_welcome_email
 
 # import random
 # import string
 
 
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+        fields = ["id", "department_name", "created_at", "updated_at"]
+        extra_kwargs = {"created_by": {"read_only": True}}
+
+
+# class AllocateUserToDepartmentSerializer(serializers.Serializer):
+#     department = serializers.PrimaryKeyRelatedField(quer)
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for user registration by Admin"""
+
+    department = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
 
     password = serializers.HiddenField(default="Root@123")
 
     class Meta:
         model = CustomUser
-        fields = ["email", "first_name", "last_name", "role", "password"]
+        fields = ["email", "first_name", "last_name", "role", "password", "department"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def validate_password(self, value):

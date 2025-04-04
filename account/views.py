@@ -71,7 +71,8 @@ class LogoutView(APIView):
 class Home(APIView):
 
     def get(self, request, *args, **kwargs):
-        user = request.user  # Get the authenticated user
+        user = request.user
+        print(user)  # Get the authenticated user
         return Response(
             data={
                 "message": "Hello!",
