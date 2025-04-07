@@ -6,6 +6,10 @@ user = get_user_model()
 
 
 class UpdateUserPasswordSerializer(serializers.Serializer):
+    """
+    serializer for logged in user so he/she can update his/her password only
+    """
+
     new_password = serializers.CharField(required=True, write_only=True)
 
     def valid_new_password(value):

@@ -69,9 +69,13 @@ class LogoutView(APIView):
 
 
 class Home(APIView):
+    """
+    home to test authentication user tokens
+    """
 
     def get(self, request, *args, **kwargs):
-        user = request.user  # Get the authenticated user
+        user = request.user
+        print(user)  # Get the authenticated user
         return Response(
             data={
                 "message": "Hello!",
@@ -88,7 +92,7 @@ class Home(APIView):
 
 class ChangePasswordView(UpdateAPIView):
     """
-    Allows a logged-in user to change their password
+    View for logged-in users to update their password.
     """
 
     serializer_class = UpdateUserPasswordSerializer

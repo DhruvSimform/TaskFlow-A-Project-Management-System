@@ -5,8 +5,16 @@ from .models import CustomUser
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ("email", "first_name", "last_name", "role", "is_active", "is_staff")
-    search_fields = ("email", "first_name", "last_name")
+    list_display = (
+        "email",
+        "first_name",
+        "last_name",
+        "role",
+        "department",
+        "is_active",
+        "is_staff",
+    )
+    search_fields = ("email", "first_name", "last_name", "department")
     ordering = ("email",)
 
     fieldsets = (
@@ -15,6 +23,7 @@ class CustomUserAdmin(UserAdmin):
             "Personal Info",
             {"fields": ("first_name", "last_name", "role", "profile_img")},
         ),
+        ("Department", {"fields": ("department",)}),  # ✅ Fixed the tuple issue
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
     )
 
@@ -28,6 +37,7 @@ class CustomUserAdmin(UserAdmin):
                     "first_name",
                     "last_name",
                     "role",
+                    "department",
                     "password1",
                     "password2",
                 ),
