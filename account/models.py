@@ -21,8 +21,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     ]
 
     email = models.EmailField(unique=True, blank=False, validators=[email_only_gmail])
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=100, null=False, blank=False)
+    last_name = models.CharField(max_length=100, blank=False, null=False)
     is_active = models.BooleanField(default=True)  # Can login or not
     is_staff = models.BooleanField(default=False)  # Admin access
 

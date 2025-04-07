@@ -11,7 +11,7 @@ urlpatterns = [
         "token/refresh/", views.CustomTokenRefreshView.as_view(), name="token_refresh"
     ),
     # logout api to blacklit the access and refresh token
-    path("logout/", views.LogoutView.as_view()),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
     # API for logged in user can update his/her password
     path(
         "change-password/", views.ChangePasswordView.as_view(), name="change_password"

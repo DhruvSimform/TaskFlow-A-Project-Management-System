@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -45,13 +46,19 @@ class AuthMiddleware(MiddlewareMixin):
         if request.path.startswith("/admin/"):
             return None
         if not token_match:
-            return JsonResponse({"error": "Your Token is not provided"})
+            return JsonResponse(
+                {"error": "Your Token is not provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if token_match:
             access_token = token_match.group(1)  # Extract token
 
             # Check if token is blacklisted in Redis
             if cache.get(access_token) == "blacklisted":
-                return JsonResponse({"error": "Your Token is blacklisted"})
+                return JsonResponse(
+                    {"error": "Your Token is blacklisted"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
         # If user is NOT authenticated
         if not IsAuthenticated:
