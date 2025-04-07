@@ -26,8 +26,11 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """Serializer for Admin user to registration by Admin , and update the role or department of user"""
 
-    department = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(), required=False, allow_null=True
+    department = serializers.SlugRelatedField(
+        slug_field="department_name",
+        queryset=Department.objects.all(),
+        required=False,
+        allow_null=True,
     )
 
     # password is hidden to set randome password at time of user creation

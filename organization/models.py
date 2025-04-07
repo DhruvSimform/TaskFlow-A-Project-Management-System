@@ -8,7 +8,6 @@ class Department(models.Model):
     department_name = models.CharField(max_length=255, blank=False, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_department")
 
     def save(self, *args, **kwargs):
         self.department_name = self.department_name.upper()
