@@ -12,27 +12,42 @@ from .tasks import send_welcome_email
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for admin user to create and update department"""
+
     class Meta:
         model = Department
         fields = ["id", "department_name", "created_at", "updated_at"]
-        extra_kwargs = {"created_by": {"read_only": True}}
-
-
-# class AllocateUserToDepartmentSerializer(serializers.Serializer):
-#     department = serializers.PrimaryKeyRelatedField(quer)
+        extra_kwargs = {
+            "created_by": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration by Admin"""
+    """Serializer for Admin user to registration by Admin , and update the role or department of user"""
 
-    department = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), required=False, allow_null=True
+    )
 
+    # password is hidden to set randome password at time of user creation
     password = serializers.HiddenField(default="Root@123")
 
     class Meta:
         model = CustomUser
         fields = ["email", "first_name", "last_name", "role", "password", "department"]
         extra_kwargs = {"password": {"write_only": True}}
+
+    def get_extra_kwargs(self):
+        kwargs = super().get_extra_kwargs()
+
+        if self.instance:
+
+            read_only_fields = ["email", "first_name", "last_name"]
+
+            for fields in read_only_fields:
+                kwargs[fields] = {"read_only": True}
+        return kwargs
 
     def validate_password(self, value):
         """Ensure password meets Django's validation rules"""

@@ -10,11 +10,12 @@ urlpatterns = [
     path(
         "token/refresh/", views.CustomTokenRefreshView.as_view(), name="token_refresh"
     ),
-    # path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     # logout api to blacklit the access and refresh token
     path("logout/", views.LogoutView.as_view()),
-    path("", views.Home.as_view(), name="home"),
+    # API for logged in user can update his/her password
     path(
         "change-password/", views.ChangePasswordView.as_view(), name="change_password"
     ),
+    # api to to just test account app's functinality for auth
+    path("", views.Home.as_view(), name="home"),
 ]

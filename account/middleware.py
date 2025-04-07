@@ -32,6 +32,7 @@ class AuthMiddleware(MiddlewareMixin):
             "/api/account/token/refresh/",
             "/admin/login/",
         ]
+        # return None
 
         # Extract token from the Authorization header
         auth_header = request.headers.get("Authorization", "")
