@@ -42,7 +42,7 @@ class AuthMiddleware(MiddlewareMixin):
         if request.path in allowed_routes:
             print("passed")
             return None  # Let the request pass without authentication
-            # Allow admin panel to use session authentication
+        # Allow admin panel to use session authentication
         if request.path.startswith("/admin/"):
             return None
         if not token_match:

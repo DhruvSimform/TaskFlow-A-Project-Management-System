@@ -16,6 +16,8 @@ urlpatterns = [
     path(
         "change-password/", views.ChangePasswordView.as_view(), name="change_password"
     ),
+    # api for logged in user to change his profile pic
+    path("profile-pic/", views.UpdateProfilePicView.as_view()),
     # api to to just test account app's functinality for auth
     path("", views.Home.as_view(), name="home"),
 ]
