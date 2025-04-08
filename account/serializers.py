@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
+from .models import CustomUser
+
 user = get_user_model()
 
 
@@ -20,3 +22,13 @@ class UpdateUserPasswordSerializer(serializers.Serializer):
         instance.set_password(validated_data["new_password"])
         instance.save()
         return instance
+
+
+class ProfilePicSerializer(serializers.ModelSerializer):
+    """
+    serializer for logged user to update his profile pic
+    """
+
+    class Meta:
+        model = CustomUser
+        fields = ["profile_img"]

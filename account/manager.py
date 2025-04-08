@@ -8,6 +8,12 @@ class CustomeUserManager(BaseUserManager):
 
         if not email:
             raise ValueError("The Email Filed is Must Required")
+        if not extra_fields.get("first_name"):
+            raise ValueError("The First Name field is required")
+        if not extra_fields.get("last_name"):
+            raise ValueError("the last name field is required")
+        if not extra_fields.get("role"):
+            raise ValueError("role must be provide")
 
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)

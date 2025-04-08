@@ -38,7 +38,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ["email", "first_name", "last_name", "role", "password", "department"]
+        fields = [
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "password",
+            "department",
+            "profile_img",
+        ]
         extra_kwargs = {"password": {"write_only": True}}
 
     def get_extra_kwargs(self):

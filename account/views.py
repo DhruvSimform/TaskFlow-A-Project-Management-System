@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .serializers import UpdateUserPasswordSerializer
+from .serializers import ProfilePicSerializer, UpdateUserPasswordSerializer
 
 
 class CustomTokenRefreshView(TokenRefreshView):
@@ -113,3 +113,14 @@ class ChangePasswordView(UpdateAPIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateProfilePicView(UpdateAPIView):
+    """
+    View for logged in user to update their Profile pic or upload by defult it's none if not set by admin
+    """
+
+    serializer_class = ProfilePicSerializer
+
+    def get_object(self):
+        return self.request.user
