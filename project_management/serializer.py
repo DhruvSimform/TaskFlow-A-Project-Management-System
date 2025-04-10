@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from organization.serializers import UserRegistrationSerializer
 
 from .models import Project, ProjectCollaborator
+from .tasks import send_collaborator_email
 
 
 class ProjectListSerializer(serializers.ModelSerializer):
@@ -66,7 +67,6 @@ class AddCollaboratorSerializer(serializers.ModelSerializer):
 
         if ProjectCollaborator.objects.filter(project=project, user=user).exists():
             raise ValidationError("User is already a collaborator on this project.")
-
         return attrs
 
     def create(self, validated_data):
@@ -74,6 +74,19 @@ class AddCollaboratorSerializer(serializers.ModelSerializer):
         user = self.context["user"]
         added_by = self.context["request"].user
 
-        return ProjectCollaborator.objects.create(
+        collaborator = ProjectCollaborator.objects.create(
             project=project, user=user, added_by=added_by
         )
+
+        # Trigger the email task asynchronously
+        send_collaborator_email.delay(
+            user.email,
+            {
+                "user_name": user.name,  # assuming you have @property def name in your model
+                "project_name": project.name,
+                "added_by": added_by.name,
+                "project_description": project.description,
+            },
+        )
+
+        return collaborator

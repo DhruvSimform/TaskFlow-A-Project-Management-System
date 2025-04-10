@@ -15,8 +15,8 @@ from organization.permitions import IsAdminUser
 
 from .models import Project, ProjectCollaborator
 from .permitions import (
-    IsAdminOrCollaborater,
     IsAdminOrCollaboratingManager,
+    IsAdminOrCollaborator,
     IsAdminOrManager,
 )
 from .serializer import (
@@ -56,7 +56,7 @@ class ProjectDetailsUpdateRetriveDeleteView(RetrieveUpdateDestroyAPIView):
 
     def get_permissions(self):
         if self.request.method == "GET":
-            permission_classes = [IsAdminOrCollaborater]
+            permission_classes = [IsAdminOrCollaborator]
         elif self.request.method in ["PUT", "PATCH"]:
             permission_classes = [IsAdminOrManager]
         else:

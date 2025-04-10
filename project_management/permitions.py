@@ -1,15 +1,11 @@
 from rest_framework.permissions import BasePermission
 
-# class IsAdminOrManager(BasePermission):
 
-#     def has_permission(self, request, view):
-#         return request.user._is_authenticated and request.user.
-
-
-def has_object_permission(self, request, view, obj):
-    is_admin = request.user.role == "ADMIN"
-    is_collaborator = obj.collaborators.filter(id=request.user.id).exists()
-    return request.user.is_authenticated and (is_admin or is_collaborator)
+class IsAdminOrCollaborator(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        is_admin = request.user.role == "ADMIN"
+        is_collaborator = obj.collaborators.filter(id=request.user.id).exists()
+        return request.user.is_authenticated and (is_admin or is_collaborator)
 
 
 class IsAdminOrManager(BasePermission):

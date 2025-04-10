@@ -54,7 +54,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         if self.instance:
 
-            read_only_fields = ["email", "first_name", "last_name"]
+            read_only_fields = ["email", "first_name", "last_name", "password"]
 
             for fields in read_only_fields:
                 kwargs[fields] = {"read_only": True}
@@ -81,6 +81,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Call Celery task to send an email
         send_welcome_email.delay(user.email, user.first_name, password)
         return user
+
+    def update(self, instance, validated_data):
+        validated_data.pop("password", None)
+        return super().update(instance, validated_data)
 
     # def generate_password(self, length=12):
     #     """Generate a secure random password"""
