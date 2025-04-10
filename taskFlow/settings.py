@@ -54,9 +54,11 @@ INSTALLED_APPS = [
     "cloudinary",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
-    "account",
-    "organization",
+    "account",  # app
+    "organization",  # app
     "django_celery_beat",
+    "guardian",
+    "project_management",  # app
 ]
 
 
@@ -162,6 +164,11 @@ REST_FRAMEWORK = {
     ),
 }
 
+# django-guardian backend setup
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",  # default
+    "guardian.backends.ObjectPermissionBackend",
+)
 
 # JWT Settings
 SIMPLE_JWT = {
