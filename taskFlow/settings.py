@@ -57,8 +57,9 @@ INSTALLED_APPS = [
     "account",  # app
     "organization",  # app
     "django_celery_beat",
-    "guardian",
+    # "guardian",
     "project_management",  # app
+    "task_management",
 ]
 
 
