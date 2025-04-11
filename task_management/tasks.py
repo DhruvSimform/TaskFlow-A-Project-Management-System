@@ -28,7 +28,6 @@ def check_and_complete_parent_task(task_id):
             parent.completed_date = None
             parent.save(update_fields=["status", "completed_date"])
 
-    # ✅ Always recurse no matter what
     check_and_complete_parent_task.delay(parent.id)
 
 
