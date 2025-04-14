@@ -1,5 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
@@ -33,6 +35,21 @@ class Home(APIView):
 class TaskListCreateView(ListCreateAPIView):
     permission_classes = [IsAdminOrCollaborator]
     serializer_class = TaskSerializer
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+
+    # 🔎 Fields you can search using ?search=...
+    search_fields = ["title", "description", "project__name", "status", "priority"]
+
+    # 🧮 Fields you can filter with ?status=C&priority=H
+    filterset_fields = ["status", "priority", "project", "created_by"]
+
+    # 📌 Fields you can order by ?ordering=start_date or ?ordering=-priority
+    ordering_fields = ["start_date", "due_date", "priority", "status", "title"]
+    ordering = ["start_date"]  # Default ordering
 
     def get_queryset(self):
         """

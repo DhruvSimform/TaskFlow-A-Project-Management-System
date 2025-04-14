@@ -48,8 +48,8 @@ class ProjectView(ListCreateAPIView):
     # Enable search on name and description
     search_fields = ["name", "description"]
 
-    ordering_fields = ["last_updated", "status"]
-    ordering = ["-last_updated", "status"]
+    ordering_fields = ["updated_at", "status"]
+    ordering = ["-updated_at", "status"]
 
     def get_queryset(self):
         if self.request.user.role == "ADMIN":
