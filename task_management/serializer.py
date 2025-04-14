@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from account.models import CustomUser
 
@@ -12,6 +14,7 @@ class TaskCollaboratorSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskCollaborator
         fields = "__all__"
+        read_only_fields = ("task", "added_by", "user", "id")
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -22,33 +25,48 @@ class TaskSerializer(serializers.ModelSerializer):
     created_by = serializers.StringRelatedField(read_only=True)
     updated_by = serializers.StringRelatedField(read_only=True)
 
-    # Accept collaborator user IDs in POST (write-only)
-    collaborator_ids = serializers.ListField(
-        child=serializers.IntegerField(), write_only=True, required=False
+    # Accept collaborator email addresses in POST (write-only)
+    collaborator_emails = serializers.ListField(
+        child=serializers.EmailField(), write_only=True, required=False
     )
 
     class Meta:
         model = Task
         fields = "__all__"
-        read_only_fields = ("created_by", "updated_by", "completed_date")
+        read_only_fields = (
+            "created_by",
+            "updated_by",
+            "completed_date",
+            "created_at",
+            "updated_at",
+            "project",
+        )
 
     def create(self, validated_data):
         request_user = self.context["request"].user
-        collaborator_ids = validated_data.pop("collaborator_ids", [])
+        collaborator_emails = validated_data.pop("collaborator_emails", [])
         also_collaborator = validated_data.pop("also_collaborator", False)
-
+        print(collaborator_emails)
         # Create task
-        a = CustomUser.objects.get(pk=1)
-        task = Task.objects.create(created_by=a, updated_by=a, **validated_data)
+        task = Task.objects.create(**validated_data)
 
-        # Add listed collaborators
-        for uid in collaborator_ids:
-            user = CustomUser.objects.get(pk=uid)
-            TaskCollaborator.objects.create(task=task, user=user, added_by=a)
+        # Add collaborators based on email addresses
+        for email in collaborator_emails:
+            try:
+                user = CustomUser.objects.get(email=email)  # Look up by email
+                TaskCollaborator.objects.create(
+                    task=task, user=user, added_by=request_user
+                )
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"User with email {email} does not exist."
+                )
 
         # Add manager (creator) as collaborator if they checked the box
-        if also_collaborator and request_user.id not in collaborator_ids:
-            TaskCollaborator.objects.create(task=task, user=a, added_by=a)
+        if also_collaborator and request_user.email not in collaborator_emails:
+            TaskCollaborator.objects.create(
+                task=task, user=request_user, added_by=request_user
+            )
 
         return task
 
@@ -61,21 +79,18 @@ class TaskSerializer(serializers.ModelSerializer):
         return TaskSerializer(subtask, many=True).data
 
     def validate(self, data):
-        # try:
-        #     Merge existing instance data if updating
         cleaned_data = data.copy()
-        cleaned_data.pop("also_collaborator", None)  # safely remove it if it exists
-        instance = (
-            Task(**{**self.instance.__dict__, **cleaned_data})
-            if self.instance
-            else Task(**cleaned_data)
-        )
-        instance.clean()
+        cleaned_data.pop("also_collaborator", None)
+        cleaned_data.pop("collaborator_emails", None)
 
-    # except DjangoValidationError as e:
-    # pass
-    #     if hasattr(e, 'message_dict'):
-    #         raise serializers.ValidationError(e.message_dict)
-    #     else:
-    #         raise serializers.ValidationError({"non_field_errors": e.messages})
-    # return data
+        try:
+            instance = Task(**cleaned_data)
+            instance.clean()  # Perform model-level validation
+        except DjangoValidationError as e:
+            raise DRFValidationError(
+                e.message_dict
+                if hasattr(e, "message_dict")
+                else {"non_field_errors": e.messages}
+            )
+
+        return data  # return original data, not cleaned_data

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "django_filters",
     "account",  # app
     "organization",  # app
     "django_celery_beat",
@@ -163,6 +164,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 # django-guardian backend setup

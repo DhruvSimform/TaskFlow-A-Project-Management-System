@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import (
     CreateAPIView,
@@ -36,6 +37,19 @@ class Home(APIView):
 class ProjectView(ListCreateAPIView):
     serializer_class = ProjectListSerializer
     queryset = Project.objects.all()
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    # Enable filtering by status only
+    filterset_fields = ["status"]
+
+    # Enable search on name and description
+    search_fields = ["name", "description"]
+
+    ordering_fields = ["last_updated", "status"]
+    ordering = ["-last_updated", "status"]
 
     def get_queryset(self):
         if self.request.user.role == "ADMIN":

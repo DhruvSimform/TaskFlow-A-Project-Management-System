@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from account.models import CustomUser
 from project_management.mixin import DataTimeMixIn
+from project_management.models import Project
 
 
 class TaskStatus(models.TextChoices):
@@ -86,6 +87,8 @@ class Task(DataTimeMixIn):
     updated_by = models.ForeignKey(
         CustomUser, on_delete=models.DO_NOTHING, related_name="updated_tasks"
     )
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
 
     class Meta:
         ordering = ["start_date", "priority"]
