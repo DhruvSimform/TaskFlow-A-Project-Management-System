@@ -20,6 +20,7 @@ class ProjectCollaborator(models.Model):
     added_by = models.ForeignKey(
         CustomUser, on_delete=models.DO_NOTHING, related_name="added_collaborators"
     )
+
     is_deleted = models.BooleanField(default=False)
 
     class Meta:

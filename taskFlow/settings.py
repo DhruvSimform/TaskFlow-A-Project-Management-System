@@ -54,11 +54,13 @@ INSTALLED_APPS = [
     "cloudinary",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "django_filters",
     "account",  # app
     "organization",  # app
     "django_celery_beat",
-    "guardian",
+    # "guardian",
     "project_management",  # app
+    "task_management",
 ]
 
 
@@ -135,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -162,6 +164,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 # django-guardian backend setup
