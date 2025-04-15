@@ -32,3 +32,12 @@ class ProfilePicSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["profile_img"]
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField()
+    password2 = serializers.CharField()
+
+
+class RequestResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()

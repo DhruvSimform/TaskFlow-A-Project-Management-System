@@ -32,6 +32,7 @@ class AuthMiddleware(MiddlewareMixin):
             "/api/account/token/verify/",
             "/api/account/token/refresh/",
             "/admin/login/",
+            "/api/account/request-reset-password/",
         ]
         # return None
 
@@ -43,6 +44,8 @@ class AuthMiddleware(MiddlewareMixin):
             print("passed")
             return None  # Let the request pass without authentication
         # Allow admin panel to use session authentication
+        if request.path.startswith("/api/account/request-reset-password/"):
+            return self.get_response(request)
         if request.path.startswith("/admin/"):
             return None
         if not token_match:

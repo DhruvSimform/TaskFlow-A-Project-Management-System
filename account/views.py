@@ -3,15 +3,58 @@
 # Create your views here.
 import datetime
 
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
 # from django.conf import settings
 from django.core.cache import cache
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status
-from rest_framework.generics import UpdateAPIView
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework.generics import GenericAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .serializers import ProfilePicSerializer, UpdateUserPasswordSerializer
+from account.models import CustomUser
+from account.serializers import (
+    ProfilePicSerializer,
+    RequestResetPasswordSerializer,
+    ResetPasswordSerializer,
+    UpdateUserPasswordSerializer,
+)
+from account.tasks import send_password_reset_email
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom view for obtaining JWT tokens.
+    This view extends the `TokenObtainPairView` to include additional functionality.
+    It uses the `TokenObtainPairSerializer` to validate user credentials and generate
+    access and refresh tokens. Additionally, it updates the `last_login` field of the
+    user upon successful authentication.
+    Methods:
+        post(request, *args, **kwargs):
+            Handles POST requests to validate user credentials, generate tokens, and
+            update the user's `last_login` field.
+    """
+
+    serializer_class = TokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        # Validate credentials and generate tokens using parent method
+        response = super().post(request, *args, **kwargs)
+
+        # Use the serializer to access the validated user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.user
+        user.last_login = datetime.datetime.now()
+        user.save(update_fields=["last_login"])
+
+        return response
 
 
 class CustomTokenRefreshView(TokenRefreshView):
@@ -124,3 +167,95 @@ class UpdateProfilePicView(UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class GeneratePasswordResetView(GenericAPIView):
+    """
+    View to handle password reset requests.
+    This view allows users to request a password reset by providing their email address.
+    If the email is associated with a registered user, a password reset link is generated
+    and sent to the user's email.
+    Attributes:
+        serializer_class (RequestResetPasswordSerializer): The serializer class used for validating input data.
+        queryset (list): An empty queryset as this view does not interact with a specific model.
+    Methods:
+        post(request):
+            Handles the POST request to generate a password reset link.
+            - Validates the presence of the "email" field in the request data.
+            - Checks if a user exists with the provided email.
+            - Generates a password reset link containing a unique token and user ID.
+            - Sends the reset link to the user's email asynchronously.
+            - Returns a success response if the email is sent, or an error response if the user does not exist.
+    """
+
+    serializer_class = RequestResetPasswordSerializer
+    queryset = []
+
+    def post(self, request):
+        user_email = request.data.get("email")
+        if not user_email:
+            raise ValidationError("Email is not provided")
+
+        try:
+            user = CustomUser.objects.get(email=user_email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"detail": "User does not exist with this email ID."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        token = PasswordResetTokenGenerator().make_token(user)
+
+        reset_link = f"http://127.0.0.1:8000/api/account/request-reset-password/{uidb64}/{token}/"
+        send_password_reset_email.delay(user.email, reset_link)
+
+        return Response(
+            {"message": "Reset password email has been sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetView(GenericAPIView):
+    """
+    Handles password reset functionality for users.
+    Attributes:
+        serializer_class (ResetPasswordSerializer): The serializer class used for validating input data.
+        queryset (list): An empty list, as this view does not require a queryset.
+    Methods:
+        post(request, uidb64, token):
+            Handles the POST request to reset the user's password.
+            Args:
+                request (Request): The HTTP request object containing the password data.
+                uidb64 (str): The base64 encoded user ID.
+                token (str): The password reset token.
+            Raises:
+                ValidationError: If the user ID is invalid or passwords do not match.
+                AuthenticationFailed: If the token is invalid or expired.
+            Returns:
+                Response: A success message indicating the password has been reset.
+    """
+
+    serializer_class = ResetPasswordSerializer
+    queryset = []
+
+    def post(self, request, uidb64, token):
+        try:
+            user_id = force_str(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=user_id)
+        except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+            raise ValidationError("Invalid user ID")
+
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            raise AuthenticationFailed("Invalid or expired token.")
+
+        password = request.data.get("password")
+        password2 = request.data.get("password2")
+
+        if password != password2:
+            raise ValidationError("Passwords do not match.")
+
+        user.set_password(password)
+        user.save()
+
+        return Response({"message": "Password has been reset successfully."})

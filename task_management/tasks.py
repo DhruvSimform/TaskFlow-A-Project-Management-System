@@ -84,3 +84,5 @@ def send_task_collaborator_email_celery(task_id, user_id, added_by_id):
 
     except (Task.DoesNotExist, CustomUser.DoesNotExist) as e:
         print(str(e))
+
+        pass
