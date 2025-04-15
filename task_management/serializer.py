@@ -9,7 +9,7 @@ from .models import Task, TaskCollaborator
 
 class TaskCollaboratorSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()  # Optional: For better readability
-    addedby = serializers.StringRelatedField()
+    added_by = serializers.StringRelatedField()
 
     class Meta:
         model = TaskCollaborator
