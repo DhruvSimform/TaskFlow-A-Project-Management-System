@@ -160,7 +160,9 @@ class ChangePasswordView(UpdateAPIView):
 
 class UpdateProfilePicView(UpdateAPIView):
     """
-    View for logged in user to update their Profile pic or upload by defult it's none if not set by admin
+    View for logged-in users to update their profile picture.
+    This view allows users to upload or update their profile picture.
+    If not set by the user or admin, the profile picture remains None by default.
     """
 
     serializer_class = ProfilePicSerializer
