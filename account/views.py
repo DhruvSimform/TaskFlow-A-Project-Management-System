@@ -125,11 +125,18 @@ class LogoutView(APIView):
 
 
 class Home(APIView):
-    """
-    home to test authentication user tokens
-    """
+    """Home view to test user authentication tokens and fetch dashboard statistics."""
 
     def get_dashboard_stats(self, user_id):
+        """
+        Fetches dashboard statistics for the given user by calling a stored procedure.
+
+        Args:
+            user_id (int): The ID of the user.
+
+        Returns:
+            dict: A dictionary containing dashboard statistics.
+        """
         with connection.cursor() as cursor:
             cursor.callproc("get_user_dashboard_stats", [user_id])
             result = cursor.fetchone()
@@ -141,13 +148,21 @@ class Home(APIView):
             }
 
     def get(self, request, *args, **kwargs):
+        """
+        Handles GET requests to return user information and dashboard statistics.
+
+        Args:
+            request (Request): The HTTP request object.
+
+        Returns:
+            Response: A response containing user information and dashboard statistics.
+        """
         user = request.user
         stats = self.get_dashboard_stats(user.id)
 
-        print(user)  # Get the authenticated user
         return Response(
             data={
-                "message": "Hello!",
+                "message": "Welcome to your dashboard!",
                 "user_info": {
                     "id": user.id,
                     "email": user.email,
@@ -156,7 +171,8 @@ class Home(APIView):
                     "name": user.name,
                 },
                 "stats": stats,
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
 
