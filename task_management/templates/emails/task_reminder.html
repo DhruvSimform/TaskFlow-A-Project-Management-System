@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fc;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    h2 {
+      color: #003366;
+      font-size: 26px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    p {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .project-block {
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .project-block h3 {
+      color: #003366;
+      font-size: 22px;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+
+    .task {
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      margin-bottom: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .task:hover {
+      background-color: #f0f8ff;
+    }
+
+    .priority-H {
+      color: #ff4d4d;
+      font-weight: bold;
+    }
+
+    .priority-M {
+      color: #ffb84d;
+      font-weight: bold;
+    }
+
+    .priority-L {
+      color: #66cc66;
+      font-weight: bold;
+    }
+
+    .task-info {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .task-info strong {
+      font-weight: 600;
+      color: #003366;
+    }
+
+    .task-link {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 20px;
+      background-color: #003366;
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .task-link:hover {
+      background-color: #005bb5;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+    }
+
+    .footer a {
+      color: #003366;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsiveness for mobile devices */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      .project-block {
+        padding: 15px;
+      }
+
+      .task-info {
+        font-size: 13px;
+      }
+
+      .task-link {
+        padding: 10px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>Task Reminder for {{ today }}</h2>
+  <p>This is a quick reminder of your pending tasks for <strong>{{ today }}</strong>.</p>
+
+  {% for project, tasks in project_task_map.items %}
+    <div class="project-block">
+      <h3>📌 Project: {{ project }}</h3>
+      {% for task in tasks %}
+        <div class="task">
+          <div class="task-info">
+            <strong>Task:</strong> {{ task.title }}<br>
+            <strong>Priority:</strong> <span class="priority-{{ task.priority }}">{{ task.get_priority_display }}</span><br>
+            <strong>Due Date:</strong> {{ task.due_date|date:"M d, Y" }}<br>
+            <strong>Status:</strong> {{ task.get_status_display }}
+          </div>
+          <a href="#" class="task-link">View Task Details</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="footer">
+    This is an automated reminder from TaskFlow. <br>Thank you for being an integral part of our platform.<br><br>Stay productive! 💪<br><br>If you have any questions or need assistance, feel free to <a href="mailto:support@taskflow.com">contact support</a>.
+  </div>
+</body>
+</html>

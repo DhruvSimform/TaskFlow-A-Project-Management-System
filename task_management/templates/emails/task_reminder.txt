@@ -1,0 +1,19 @@
+Hello {{ user.first_name }},
+
+Here are your pending tasks grouped by project:
+
+{% for project, tasks in project_task_map.items %}
+Project: {{ project }}
+-----------------------
+{% for task in tasks %}
+- {{ task.title }}
+  Description: {{ task.description }}
+  Priority: {{ task.get_priority_display }}
+  Due Date: {{ task.due_date|date:"d M Y H:i" }}
+  Status: {{ task.get_status_display }}
+
+{% endfor %}
+{% endfor %}
+
+Keep up the good work!
+— TaskFlow Team

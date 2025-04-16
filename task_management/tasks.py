@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from account.models import CustomUser
-from task_management.models import Task, TaskStatus
+from task_management.models import Task, TaskCollaborator, TaskPriority, TaskStatus
 
 
 @shared_task
@@ -86,3 +86,87 @@ def send_task_collaborator_email_celery(task_id, user_id, added_by_id):
         print(str(e))
 
         pass
+
+
+PRIORITY_ORDER = {
+    TaskPriority.HIGH: 1,
+    TaskPriority.MEDIUM: 2,
+    TaskPriority.LOW: 3,
+}
+
+
+@shared_task
+def send_task_reminder_emails():
+    user_ids = TaskCollaborator.objects.values_list("user", flat=True).distinct()
+    for user_id in user_ids:
+        send_single_task_reminder_email.delay(user_id)  # Trigger in parallel
+
+
+@shared_task
+def send_single_task_reminder_email(user_id):
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.utils import timezone
+
+    try:
+        user = CustomUser.objects.get(id=user_id)
+
+        user_tasks = (
+            Task.objects.filter(
+                collaborators__id=user_id,
+                status__in=[
+                    TaskStatus.PENDING,
+                    TaskStatus.IN_PROGRESS,
+                    TaskStatus.OVERDUE,
+                ],
+            )
+            .prefetch_related("project")
+            .order_by("priority", "due_date")
+        )
+
+        if not user_tasks.exists():
+            return
+
+        PRIORITY_ORDER = {
+            TaskPriority.HIGH: 1,
+            TaskPriority.MEDIUM: 2,
+            TaskPriority.LOW: 3,
+        }
+
+        # Group tasks by project
+        project_task_map = {}
+        for task in user_tasks:
+            project_name = task.project.name
+            if project_name not in project_task_map:
+                project_task_map[project_name] = []
+
+            project_task_map[project_name].append(task)
+
+        # Sort tasks by priority and due date
+        for project_name, tasks in project_task_map.items():
+            tasks.sort(
+                key=lambda t: (
+                    PRIORITY_ORDER.get(t.priority, float("inf")),
+                    t.due_date or timezone.now(),
+                )
+            )
+
+        context = {
+            "user": user,
+            "project_task_map": project_task_map,
+            "today": timezone.now().date(),
+        }
+
+        subject = "⏰ Daily Task Reminder - TaskFlow"
+        from_email = "noreply@taskflow.com"
+        to_email = "pateldhruvn2004@gmail.com"  # Replace with test email if needed
+
+        text_body = render_to_string("emails/task_reminder.txt", context)
+        html_body = render_to_string("emails/task_reminder.html", context)
+
+        email = EmailMultiAlternatives(subject, text_body, from_email, [to_email])
+        email.attach_alternative(html_body, "text/html")
+        email.send()
+
+    except CustomUser.DoesNotExist:
+        return
