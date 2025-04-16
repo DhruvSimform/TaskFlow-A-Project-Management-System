@@ -7,6 +7,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 # from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status
@@ -25,6 +26,13 @@ from account.serializers import (
     UpdateUserPasswordSerializer,
 )
 from account.tasks import send_password_reset_email
+from account.throttle import (
+    ChangePasswordThrottle,
+    LoginThrottlePerHour,
+    LoginThrottlePerMinute,
+    RefreshTokenThrottle,
+    ResetPasswordThrottle,
+)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -42,6 +50,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = TokenObtainPairSerializer
 
+    throttle_classes = [LoginThrottlePerHour, LoginThrottlePerMinute]
+
     def post(self, request, *args, **kwargs):
         # Validate credentials and generate tokens using parent method
         response = super().post(request, *args, **kwargs)
@@ -51,7 +61,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         serializer.is_valid(raise_exception=True)
 
         user = serializer.user
-        user.last_login = datetime.datetime.now()
+        user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
 
         return response
@@ -59,6 +69,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class CustomTokenRefreshView(TokenRefreshView):
     """Handles token refresh requests and checks if the refresh token is blacklisted."""
+
+    throttle_classes = [RefreshTokenThrottle]
 
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get("refresh", None)
@@ -134,6 +146,8 @@ class Home(APIView):
 
 
 class ChangePasswordView(UpdateAPIView):
+    throttle_classes = [ChangePasswordThrottle]
+    # throttle_scope = 'change_password'
     """
     View for logged-in users to update their password.
     """
@@ -172,6 +186,7 @@ class UpdateProfilePicView(UpdateAPIView):
 
 
 class GeneratePasswordResetView(GenericAPIView):
+    throttle_classes = [ResetPasswordThrottle]
     """
     View to handle password reset requests.
     This view allows users to request a password reset by providing their email address.
@@ -219,6 +234,7 @@ class GeneratePasswordResetView(GenericAPIView):
 
 
 class PasswordResetView(GenericAPIView):
+    throttle_classes = [ResetPasswordThrottle]
     """
     Handles password reset functionality for users.
     Attributes:
