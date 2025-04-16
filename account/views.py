@@ -7,6 +7,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 # from django.conf import settings
 from django.core.cache import cache
+from django.db import connection
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -128,8 +129,21 @@ class Home(APIView):
     home to test authentication user tokens
     """
 
+    def get_dashboard_stats(self, user_id):
+        with connection.cursor() as cursor:
+            cursor.callproc("get_user_dashboard_stats", [user_id])
+            result = cursor.fetchone()
+            return {
+                "total_projects": result[0],
+                "completed_projects": result[1],
+                "pending_tasks": result[2],
+                "due_tasks": result[3],
+            }
+
     def get(self, request, *args, **kwargs):
         user = request.user
+        stats = self.get_dashboard_stats(user.id)
+
         print(user)  # Get the authenticated user
         return Response(
             data={
@@ -141,6 +155,7 @@ class Home(APIView):
                     "last_name": user.last_name,
                     "name": user.name,
                 },
+                "stats": stats,
             }
         )
 
