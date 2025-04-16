@@ -2,6 +2,7 @@
 # from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 import datetime
+import logging
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
@@ -35,6 +36,8 @@ from account.throttle import (
     ResetPasswordThrottle,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
@@ -54,18 +57,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [LoginThrottlePerHour, LoginThrottlePerMinute]
 
     def post(self, request, *args, **kwargs):
-        # Validate credentials and generate tokens using parent method
-        response = super().post(request, *args, **kwargs)
+        logger.info("Attempting to authenticate user.")
+        try:
+            # Validate credentials and generate tokens using parent method
+            response = super().post(request, *args, **kwargs)
 
-        # Use the serializer to access the validated user
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+            # Use the serializer to access the validated user
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        user = serializer.user
-        user.last_login = timezone.now()
-        user.save(update_fields=["last_login"])
+            user = serializer.user
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
 
-        return response
+            logger.info(f"User {user.email} authenticated successfully.")
+            return response
+        except Exception as e:
+            logger.error(f"Authentication failed: {str(e)}")
+            raise
 
 
 class CustomTokenRefreshView(TokenRefreshView):

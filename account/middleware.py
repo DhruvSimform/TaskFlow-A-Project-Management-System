@@ -1,4 +1,5 @@
 # from django.http import JsonResponse
+import logging
 import re
 
 from django.core.cache import cache
@@ -9,6 +10,8 @@ from django.utils.deprecation import MiddlewareMixin
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
+logger = logging.getLogger(__name__)
+
 
 class AuthMiddleware(MiddlewareMixin):
     """
@@ -16,6 +19,8 @@ class AuthMiddleware(MiddlewareMixin):
     """
 
     def process_request(self, request):
+        # Log the user request details
+
         """
         Handles authentication and token validation for incoming requests.
 
@@ -25,7 +30,12 @@ class AuthMiddleware(MiddlewareMixin):
         For unauthenticated users, it redirects to the login page for web/admin requests
         or allows API requests to proceed without authentication.
         """
-
+        user_ip = request.META.get("REMOTE_ADDR", "Unknown IP")
+        user_agent = request.META.get("HTTP_USER_AGENT", "Unknown User Agent")
+        print("")
+        logger.info(
+            f"Request from IP: {user_ip}, User Agent: {user_agent}, Path: {request.path}"
+        )
         # Allow access to these routes without authentication
         allowed_routes = [
             "/api/account/login/",
