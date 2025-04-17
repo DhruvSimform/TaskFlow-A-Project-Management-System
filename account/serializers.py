@@ -35,9 +35,22 @@ class ProfilePicSerializer(serializers.ModelSerializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
-    password = serializers.CharField()
+    """
+    Serializer for resetting and validating new passwords.
+    """
+
+    password1 = serializers.CharField()
     password2 = serializers.CharField()
+
+    def validate_password1(self, value):
+        validate_password(value)
+        return value
+
+    def validate(self, attrs):
+        if self.password1 != self.password2:
+            raise ValueError("Both password should be same")
+        return super().validate(attrs)
 
 
 class RequestResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=True)

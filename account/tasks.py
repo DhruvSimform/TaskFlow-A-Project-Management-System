@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 def send_password_reset_email(email, reset_link):
     subject = "Reset Your Password - TaskFlow"
     from_email = "no-reply@taskflow.com"
-    to_email = ["pateldhruvn2004@gmail.com"]
+    to_email = ["pateldhruvn2004@gmail.com", email]
 
     html_content = render_to_string(
         "emails/password_reset.html",

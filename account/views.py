@@ -1,12 +1,7 @@
-# from django.shortcuts import render
-# from rest_framework.permissions import IsAuthenticated
-# Create your views here.
 import datetime
 import logging
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-
-# from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.utils import timezone
@@ -41,15 +36,8 @@ logger = logging.getLogger(__name__)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
-    Custom view for obtaining JWT tokens.
-    This view extends the `TokenObtainPairView` to include additional functionality.
-    It uses the `TokenObtainPairSerializer` to validate user credentials and generate
-    access and refresh tokens. Additionally, it updates the `last_login` field of the
-    user upon successful authentication.
-    Methods:
-        post(request, *args, **kwargs):
-            Handles POST requests to validate user credentials, generate tokens, and
-            update the user's `last_login` field.
+    Custom view for obtaining JWT tokens with added functionality.
+    Updates the user's `last_login` field upon successful authentication.
     """
 
     serializer_class = TokenObtainPairSerializer
@@ -137,15 +125,7 @@ class Home(APIView):
     """Home view to test user authentication tokens and fetch dashboard statistics."""
 
     def get_dashboard_stats(self, user_id):
-        """
-        Fetches dashboard statistics for the given user by calling a stored procedure.
-
-        Args:
-            user_id (int): The ID of the user.
-
-        Returns:
-            dict: A dictionary containing dashboard statistics.
-        """
+        """Fetches dashboard stats for the user via a stored procedure."""
         with connection.cursor() as cursor:
             cursor.callproc("get_user_dashboard_stats", [user_id])
             result = cursor.fetchone()
@@ -157,15 +137,8 @@ class Home(APIView):
             }
 
     def get(self, request, *args, **kwargs):
-        """
-        Handles GET requests to return user information and dashboard statistics.
+        """Handle GET request to fetch user info and dashboard stats."""
 
-        Args:
-            request (Request): The HTTP request object.
-
-        Returns:
-            Response: A response containing user information and dashboard statistics.
-        """
         user = request.user
         stats = self.get_dashboard_stats(user.id)
 
@@ -186,11 +159,11 @@ class Home(APIView):
 
 
 class ChangePasswordView(UpdateAPIView):
+    """
+    API view to allow logged-in users to change their password.
+    """
+
     throttle_classes = [ChangePasswordThrottle]
-    # throttle_scope = 'change_password'
-    """
-    View for logged-in users to update their password.
-    """
 
     serializer_class = UpdateUserPasswordSerializer
 
@@ -226,38 +199,26 @@ class UpdateProfilePicView(UpdateAPIView):
 
 
 class GeneratePasswordResetView(GenericAPIView):
-    throttle_classes = [ResetPasswordThrottle]
     """
-    View to handle password reset requests.
-    This view allows users to request a password reset by providing their email address.
-    If the email is associated with a registered user, a password reset link is generated
-    and sent to the user's email.
-    Attributes:
-        serializer_class (RequestResetPasswordSerializer): The serializer class used for validating input data.
-        queryset (list): An empty queryset as this view does not interact with a specific model.
-    Methods:
-        post(request):
-            Handles the POST request to generate a password reset link.
-            - Validates the presence of the "email" field in the request data.
-            - Checks if a user exists with the provided email.
-            - Generates a password reset link containing a unique token and user ID.
-            - Sends the reset link to the user's email asynchronously.
-            - Returns a success response if the email is sent, or an error response if the user does not exist.
+    Handles password reset requests by validating email and sending a reset link.
     """
 
+    throttle_classes = [ResetPasswordThrottle]
     serializer_class = RequestResetPasswordSerializer
     queryset = []
 
     def post(self, request):
-        user_email = request.data.get("email")
-        if not user_email:
-            raise ValidationError("Email is not provided")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_email = serializer.validated_data["email"]
 
         try:
             user = CustomUser.objects.get(email=user_email)
         except CustomUser.DoesNotExist:
             return Response(
-                {"detail": "User does not exist with this email ID."},
+                {"message": "User does not exist with this email ID."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -275,24 +236,7 @@ class GeneratePasswordResetView(GenericAPIView):
 
 class PasswordResetView(GenericAPIView):
     throttle_classes = [ResetPasswordThrottle]
-    """
-    Handles password reset functionality for users.
-    Attributes:
-        serializer_class (ResetPasswordSerializer): The serializer class used for validating input data.
-        queryset (list): An empty list, as this view does not require a queryset.
-    Methods:
-        post(request, uidb64, token):
-            Handles the POST request to reset the user's password.
-            Args:
-                request (Request): The HTTP request object containing the password data.
-                uidb64 (str): The base64 encoded user ID.
-                token (str): The password reset token.
-            Raises:
-                ValidationError: If the user ID is invalid or passwords do not match.
-                AuthenticationFailed: If the token is invalid or expired.
-            Returns:
-                Response: A success message indicating the password has been reset.
-    """
+    """Handles password reset functionality for users by validating input data, decoding user ID, verifying token, and updating the password if valid."""
 
     serializer_class = ResetPasswordSerializer
     queryset = []
@@ -307,8 +251,11 @@ class PasswordResetView(GenericAPIView):
         if not PasswordResetTokenGenerator().check_token(user, token):
             raise AuthenticationFailed("Invalid or expired token.")
 
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        password = serializer.validated_data["password1"]
+        password2 = serializer.validated_data["password2"]
 
         if password != password2:
             raise ValidationError("Passwords do not match.")

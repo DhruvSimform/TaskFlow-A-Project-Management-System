@@ -11,10 +11,7 @@ from .services import create_department
 
 class UserView(CreateAPIView, ListAPIView):
     """
-    User View for managing user-related operations.
-
-    This view allows administrators to create new users and retrieve a list of all existing users.
-    It uses the `UserRegistrationSerializer` for data validation and serialization.
+    API view for creating and listing users, restricted to admin users.
     """
 
     permission_classes = [IsAdminUser]
@@ -25,10 +22,7 @@ class UserView(CreateAPIView, ListAPIView):
 
 class UserUpdateRetriveView(RetrieveUpdateAPIView):
     """
-    User Update and Retrieve View for managing user-related operations.
-
-    This view allows administrators to retrieve and update details of existing users.
-    It uses the `UserRegistrationSerializer` for data validation and serialization.
+    User Update and Retrieve View for administrators to manage user details using email lookup.
     """
 
     permission_classes = [IsAdminUser]
@@ -38,12 +32,7 @@ class UserUpdateRetriveView(RetrieveUpdateAPIView):
 
 
 class DepartmentView(CreateAPIView, ListAPIView):
-    """
-    Department View for managing department-related operations.
-
-    This view allows administrators to create new departments and retrieve a list of all existing departments.
-    It uses the `DepartmentSerializer` for data validation and serialization.
-    """
+    """View for creating and listing departments using `DepartmentSerializer`."""
 
     permission_classes = [IsAdminUser]
     serializer_class = DepartmentSerializer
@@ -55,10 +44,7 @@ class DepartmentView(CreateAPIView, ListAPIView):
 
 class DepartmentUpdateRetriveView(RetrieveUpdateAPIView):
     """
-    Department Update and Retrieve View for managing department-related operations.
-
-    This view allows administrators to retrieve and update details of existing departments.
-    It uses the `DepartmentSerializer` for data validation and serialization.
+    View for retrieving and updating department details, restricted to admin users.
     """
 
     permission_classes = [IsAdminUser]
