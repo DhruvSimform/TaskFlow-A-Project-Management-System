@@ -8,6 +8,10 @@ from .models import Task, TaskCollaborator
 
 
 class TaskCollaboratorSerializer(serializers.ModelSerializer):
+    """
+    Serializer for TaskCollaborator model with all fields and read-only constraints on specific fields.
+    """
+
     user = serializers.StringRelatedField()  # Optional: For better readability
     added_by = serializers.StringRelatedField()
 
@@ -43,7 +47,10 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        request_user = self.context["request"].user
+        request_user = self.context[
+            "request"
+        ].user  # Trigger background tasks after saving the model
+
         collaborator_emails = validated_data.pop("collaborator_emails", [])
         also_collaborator = validated_data.pop("also_collaborator", False)
         print(collaborator_emails)
@@ -76,7 +83,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_subtask(self, obj):
         subtask = obj.sub_tasks.all()
-        return TaskSerializer(subtask, many=True).data
+        return TaskSerializer(subtask, many=True, read_only=True).data
 
     def validate(self, data):
         cleaned_data = data.copy()

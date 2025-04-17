@@ -99,12 +99,7 @@ class TaskAdmin(admin.ModelAdmin):
             obj.created_by = request.user
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
-        # # ✅ this always runs when saving from Admin
-        # print("== Admin Save Triggered ==")
-
-        # super().save_model(request, obj, form, change)
-
-        # # 🔁 now trigger the background tasks manually here
+        # Trigger background tasks after saving the model
         if obj.parent_task_id:
             check_and_complete_parent_task.delay(obj.id)
 
