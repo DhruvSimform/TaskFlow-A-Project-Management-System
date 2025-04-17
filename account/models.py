@@ -12,13 +12,18 @@ def email_only_gmail(value):
         raise ValidationError("only Gmail Address are Allowed")
 
 
-class CustomUser(AbstractBaseUser, PermissionsMixin):
+class Role(models.TextChoices):
+    """Text Choices of roles for user"""
 
-    ROLE_CHOICES = [
-        ("ADMIN", "Admin"),
-        ("MANAGER", "Manager"),
-        ("DEVELOPER", "Developer"),
-    ]
+    ADMIN = "ADMIN", "Admin"
+    MANAGER = "MANAGER", "Manager"
+    DEVELOPER = "DEVELOPER", "Developer"
+
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    """
+    Custom user model extending AbstractBaseUser and PermissionsMixin with email as the username field.
+    """
 
     email = models.EmailField(unique=True, blank=False, validators=[email_only_gmail])
     first_name = models.CharField(max_length=100, null=False, blank=False)
@@ -26,7 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)  # Can login or not
     is_staff = models.BooleanField(default=False)  # Admin access
 
-    role = models.CharField(choices=ROLE_CHOICES, max_length=15, default="DEVELOPER")
+    role = models.CharField(choices=Role.choices, max_length=15, default=Role.DEVELOPER)
     profile_img = models.ImageField(upload_to="profile/", blank=True, null=True)
 
     department = models.ForeignKey(

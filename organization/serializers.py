@@ -1,3 +1,6 @@
+import random
+import string
+
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
@@ -6,9 +9,6 @@ from account.models import CustomUser
 
 from .models import Department
 from .tasks import send_welcome_email
-
-# import random
-# import string
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -86,7 +86,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop("password", None)
         return super().update(instance, validated_data)
 
-    # def generate_password(self, length=12):
-    #     """Generate a secure random password"""
-    #     # characters = string.ascii_letters + string.digits + string.punctuation
-    #     return "Root@123"
+
+def generate_password(self, length=12):
+    """Generate a secure random password"""
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return "".join(random.SystemRandom().choice(characters) for _ in range(length))

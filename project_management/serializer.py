@@ -8,6 +8,9 @@ from .tasks import send_collaborator_email
 
 
 class ProjectListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing project details including id, name, description, and status.
+    """
 
     class Meta:
         model = Project
@@ -15,6 +18,10 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 
 class ProjectCollaboratorSerializer(serializers.ModelSerializer):
+    """
+    Serializer for ProjectCollaborator model, handling user, added_by, and timestamps.
+    """
+
     user = UserRegistrationSerializer(read_only=True)
     added_by = serializers.StringRelatedField()
 
@@ -24,6 +31,10 @@ class ProjectCollaboratorSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Project model, including related collaborators and user details.
+    """
+
     collaborators = serializers.SerializerMethodField()
     created_by = serializers.StringRelatedField()
     updated_by = serializers.StringRelatedField()
@@ -56,6 +67,10 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class AddCollaboratorSerializer(serializers.ModelSerializer):
+    """
+    Serializer for adding a collaborator to a project with validation and email notification.
+    """
+
     class Meta:
         model = ProjectCollaborator
         fields = ["project", "user", "addeed_at", "added_by"]
@@ -74,15 +89,16 @@ class AddCollaboratorSerializer(serializers.ModelSerializer):
         user = self.context["user"]
         added_by = self.context["request"].user
 
+        project.collaborator.throuh.objects.create
         collaborator = ProjectCollaborator.objects.create(
             project=project, user=user, added_by=added_by
         )
 
-        # Trigger the email task asynchronously
+        # Trigger the email task asynchronously as backround progress
         send_collaborator_email.delay(
             user.email,
             {
-                "user_name": user.name,  # assuming you have @property def name in your model
+                "user_name": user.name,  # Accessing model properties for email content
                 "project_name": project.name,
                 "added_by": added_by.name,
                 "project_description": project.description,

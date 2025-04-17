@@ -3,14 +3,26 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("user/", views.UserView.as_view(), name="create_user"),
+    # User endpoints
     path(
-        "user/<str:email>/", views.UserUpdateRetriveView.as_view(), name="create_user"
+        "users/",
+        views.UserView.as_view(),
+        name="user-list-create",  # View all users and create a new user
     ),
-    path("department/", views.DepartmentView.as_view(), name="department_list_create"),
     path(
-        "department/<int:pk>/",
+        "users/<str:email>/",
+        views.UserUpdateRetriveView.as_view(),
+        name="user-retrieve-update",  # Retrieve or update a user by email
+    ),
+    # Department endpoints
+    path(
+        "departments/",
+        views.DepartmentView.as_view(),
+        name="department-list-create",  # View all departments and create a new department
+    ),
+    path(
+        "departments/<int:pk>/",
         views.DepartmentUpdateRetriveView.as_view(),
-        name="department_detail",
+        name="department-retrieve-update",  # Retrieve or update a department by ID
     ),
 ]

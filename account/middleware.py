@@ -67,7 +67,7 @@ class AuthMiddleware(MiddlewareMixin):
         # Check if token is blacklisted in Redis
         if cache.get(access_token) == "blacklisted":
             return JsonResponse(
-                {"error": "Your Token is blacklisted"},
+                {"error": "token is invalid"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 

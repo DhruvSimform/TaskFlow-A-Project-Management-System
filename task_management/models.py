@@ -8,6 +8,10 @@ from project_management.models import Project
 
 
 class TaskStatus(models.TextChoices):
+    """
+    TaskStatus: Enum-like class representing various statuses a task can have.
+    """
+
     PENDING = "P", "Pending"
     IN_PROGRESS = "I", "In Progress"
     COMPLETED = "C", "Completed"
@@ -17,12 +21,20 @@ class TaskStatus(models.TextChoices):
 
 
 class TaskPriority(models.TextChoices):
+    """
+    Enumeration for task priority levels: High, Medium, and Low.
+    """
+
     HIGH = "H", "High"
     MEDIUM = "M", "Medium"
     LOW = "L", "Low"
 
 
 class TaskCollaborator(models.Model):
+    """
+    Represents a collaborator associated with a task, including the user, task, and metadata about who added them and when.
+    """
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     task = models.ForeignKey("Task", on_delete=models.CASCADE)
     added_by = models.ForeignKey(
@@ -47,6 +59,10 @@ def validate_due_date(value):
 
 
 class Task(DataTimeMixIn):
+    """
+    Represents a task with attributes like title, description, status, priority, dates, and relationships to users, projects, and subtasks.
+    """
+
     title = models.CharField(max_length=255)
     description = models.TextField(null=False, blank=False)
 
@@ -140,7 +156,7 @@ class Task(DataTimeMixIn):
         #         raise ValidationError("Completed Date cannot be after Due Date.")
 
     def save(self, *args, **kwargs):
-        print("== Task Save Called ==")
+
         self.full_clean()
 
         if self.status == TaskStatus.COMPLETED and not self.completed_date:
@@ -152,7 +168,6 @@ class Task(DataTimeMixIn):
         if self.parent_task_id:
             from task_management.tasks import check_and_complete_parent_task
 
-            print("hii")
             check_and_complete_parent_task.delay(self.id)
 
         if self.status == TaskStatus.COMPLETED:
