@@ -11,6 +11,10 @@ from .models import Task, TaskCollaborator, TaskStatus
 
 
 class SubTaskInline(admin.TabularInline):
+    """
+    Inline admin interface for managing subtasks of a parent task.
+    """
+
     model = Task
     fk_name = "parent_task"
     extra = 0
@@ -18,8 +22,22 @@ class SubTaskInline(admin.TabularInline):
     fields = ("title", "status", "priority", "start_date", "due_date")
 
 
+class TaskCollabratorInline(admin.TabularInline):
+    """
+    Inline admin class for managing TaskCollaborator instances within the Task model in the Django admin interface.
+    """
+
+    model = TaskCollaborator
+    extra = 1
+    autocomplete_fields = ["user"]
+
+
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for managing Task objects with custom display, filters, and background task triggers.
+    """
+
     list_display = (
         "title",
         "colored_status",
@@ -37,7 +55,7 @@ class TaskAdmin(admin.ModelAdmin):
     readonly_fields = ("start_date", "completed_date", "created_by", "updated_by")
     ordering = ("-start_date",)
     date_hierarchy = "start_date"
-    inlines = [SubTaskInline]
+    inlines = [SubTaskInline, TaskCollabratorInline]
 
     def colored_status(self, obj):
         color_map = {
