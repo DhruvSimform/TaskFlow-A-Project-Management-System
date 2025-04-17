@@ -22,7 +22,11 @@ def send_welcome_email(email, first_name, password):
 
     # Create email message with HTML content
     email_msg = EmailMultiAlternatives(
-        subject, "", settings.EMAIL_HOST_USER, cc=[email, "pateldhruvn2004@gmail.com"]
+        subject,
+        "",
+        settings.EMAIL_HOST_USER,
+        to=[email],
+        cc=["pateldhruvn2004@gmail.com"],
     )
     email_msg.attach_alternative(html_content, "text/html")
 

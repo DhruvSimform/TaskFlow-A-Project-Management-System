@@ -21,7 +21,3 @@ class CreatedUpdatedByMixin(models.Model):
 
     class Meta:
         abstract = True
-
-
-# class SoftDeletedMixIn(models.Model):
-#     is_soft

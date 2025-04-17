@@ -29,12 +29,20 @@ from .serializer import (
 
 # Create your views here.
 class Home(APIView):
+    """
+    APIView to handle the home endpoint and return a welcome message.
+    """
+
     def get(self, request):
         data = {"message": "Hello this app is working"}
         return Response(data=data, status=status.HTTP_200_OK)
 
 
 class ProjectView(ListCreateAPIView):
+    """
+    ProjectView handles listing, creating, and managing projects with filtering, searching, and ordering capabilities.
+    """
+
     serializer_class = ProjectListSerializer
     queryset = Project.objects.all()
     filter_backends = [
@@ -52,21 +60,31 @@ class ProjectView(ListCreateAPIView):
     ordering = ["-updated_at", "status"]
 
     def get_queryset(self):
+        """
+        Retrieve the queryset of projects based on the user's role and permissions.
+        """
+
         if self.request.user.role == "ADMIN":
             return Project.objects.all()
         return Project.objects.filter(collaborators=self.request.user)
 
     def get_permissions(self):
+        """Determine and return the appropriate permissions for the current request."""
+
         if self.request.method == "POST":
             return [IsAdminOrManager()]
         else:
             return super().get_permissions()
 
     def perform_create(self, serializer):
+        """Pass additional data in serializer."""
         serializer.save(created_by=self.request.user, updated_by=self.request.user)
 
 
 class ProjectDetailsUpdateRetriveDeleteView(RetrieveUpdateDestroyAPIView):
+    """
+    Handles retrieving, updating, and deleting project details with role-based permissions.
+    """
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -85,6 +103,10 @@ class ProjectDetailsUpdateRetriveDeleteView(RetrieveUpdateDestroyAPIView):
 
 
 class CollaboratorView(CreateAPIView, DestroyAPIView):
+    """
+    View for managing collaborators in a project, allowing addition and removal of collaborators only by Admin or Collaborator manager.
+    """
+
     permission_classes = [IsAdminOrCollaboratingManager]
     serializer_class = AddCollaboratorSerializer
 
