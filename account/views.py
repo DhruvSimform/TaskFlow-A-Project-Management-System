@@ -2,11 +2,14 @@
 # from rest_framework.permissions import IsAuthenticated
 # Create your views here.
 import datetime
+import logging
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 # from django.conf import settings
 from django.core.cache import cache
+from django.db import connection
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status
@@ -25,6 +28,15 @@ from account.serializers import (
     UpdateUserPasswordSerializer,
 )
 from account.tasks import send_password_reset_email
+from account.throttle import (
+    ChangePasswordThrottle,
+    LoginThrottlePerHour,
+    LoginThrottlePerMinute,
+    RefreshTokenThrottle,
+    ResetPasswordThrottle,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -42,23 +54,33 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     serializer_class = TokenObtainPairSerializer
 
+    throttle_classes = [LoginThrottlePerHour, LoginThrottlePerMinute]
+
     def post(self, request, *args, **kwargs):
-        # Validate credentials and generate tokens using parent method
-        response = super().post(request, *args, **kwargs)
+        logger.info("Attempting to authenticate user.")
+        try:
+            # Validate credentials and generate tokens using parent method
+            response = super().post(request, *args, **kwargs)
 
-        # Use the serializer to access the validated user
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+            # Use the serializer to access the validated user
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        user = serializer.user
-        user.last_login = datetime.datetime.now()
-        user.save(update_fields=["last_login"])
+            user = serializer.user
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
 
-        return response
+            logger.info(f"User {user.email} authenticated successfully.")
+            return response
+        except Exception as e:
+            logger.error(f"Authentication failed: {str(e)}")
+            raise
 
 
 class CustomTokenRefreshView(TokenRefreshView):
     """Handles token refresh requests and checks if the refresh token is blacklisted."""
+
+    throttle_classes = [RefreshTokenThrottle]
 
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get("refresh", None)
@@ -112,16 +134,44 @@ class LogoutView(APIView):
 
 
 class Home(APIView):
-    """
-    home to test authentication user tokens
-    """
+    """Home view to test user authentication tokens and fetch dashboard statistics."""
+
+    def get_dashboard_stats(self, user_id):
+        """
+        Fetches dashboard statistics for the given user by calling a stored procedure.
+
+        Args:
+            user_id (int): The ID of the user.
+
+        Returns:
+            dict: A dictionary containing dashboard statistics.
+        """
+        with connection.cursor() as cursor:
+            cursor.callproc("get_user_dashboard_stats", [user_id])
+            result = cursor.fetchone()
+            return {
+                "total_projects": result[0],
+                "completed_projects": result[1],
+                "pending_tasks": result[2],
+                "due_tasks": result[3],
+            }
 
     def get(self, request, *args, **kwargs):
+        """
+        Handles GET requests to return user information and dashboard statistics.
+
+        Args:
+            request (Request): The HTTP request object.
+
+        Returns:
+            Response: A response containing user information and dashboard statistics.
+        """
         user = request.user
-        print(user)  # Get the authenticated user
+        stats = self.get_dashboard_stats(user.id)
+
         return Response(
             data={
-                "message": "Hello!",
+                "message": "Welcome to your dashboard!",
                 "user_info": {
                     "id": user.id,
                     "email": user.email,
@@ -129,11 +179,15 @@ class Home(APIView):
                     "last_name": user.last_name,
                     "name": user.name,
                 },
-            }
+                "stats": stats,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
 class ChangePasswordView(UpdateAPIView):
+    throttle_classes = [ChangePasswordThrottle]
+    # throttle_scope = 'change_password'
     """
     View for logged-in users to update their password.
     """
@@ -172,6 +226,7 @@ class UpdateProfilePicView(UpdateAPIView):
 
 
 class GeneratePasswordResetView(GenericAPIView):
+    throttle_classes = [ResetPasswordThrottle]
     """
     View to handle password reset requests.
     This view allows users to request a password reset by providing their email address.
@@ -219,6 +274,7 @@ class GeneratePasswordResetView(GenericAPIView):
 
 
 class PasswordResetView(GenericAPIView):
+    throttle_classes = [ResetPasswordThrottle]
     """
     Handles password reset functionality for users.
     Attributes:
