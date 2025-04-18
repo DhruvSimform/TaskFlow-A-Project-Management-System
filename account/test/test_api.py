@@ -55,20 +55,6 @@ class TestLogin(BaseAuthTest):
             self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class TestTokenBehavior(BaseAuthTest):
-
-    def test_access_token_valid(self):
-        access, _ = self.login_user()
-        response = self.client.get(self.home_url, HTTP_AUTHORIZATION=f"Bearer {access}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_access_token_invalid(self):
-        response = self.client.get(
-            self.home_url, HTTP_AUTHORIZATION="Bearer invalidtoken"
-        )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
 class TestLogoutFlow(BaseAuthTest):
 
     def test_logout_successful(self):

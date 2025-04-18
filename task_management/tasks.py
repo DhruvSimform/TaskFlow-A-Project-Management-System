@@ -10,6 +10,10 @@ from task_management.models import Task, TaskCollaborator, TaskPriority, TaskSta
 
 @shared_task
 def check_and_complete_parent_task(task_id):
+    """
+    Recursively checks and updates the status of a parent task based on the statuses of its sub-tasks.
+    """
+
     try:
         task = Task.objects.select_related("parent_task").get(id=task_id)
     except Task.DoesNotExist:
@@ -37,6 +41,10 @@ def check_and_complete_parent_task(task_id):
 
 @shared_task
 def mark_all_subtasks_completed(task_id):
+    """
+    Marks all subtasks of a given task and their nested subtasks as completed recursively.
+    """
+
     try:
         task = Task.objects.get(id=task_id)
     except Task.DoesNotExist:
@@ -52,6 +60,10 @@ def mark_all_subtasks_completed(task_id):
 
 @shared_task
 def send_task_collaborator_email_celery(task_id, user_id, added_by_id):
+    """
+    Sends an email notification to a user when they are added as a collaborator to a task.
+    """
+
     try:
         task = Task.objects.get(pk=task_id)
         user = CustomUser.objects.get(pk=user_id)
@@ -97,6 +109,10 @@ PRIORITY_ORDER = {
 
 @shared_task
 def send_task_reminder_emails():
+    """
+    Sends task reminder emails to all distinct users in parallel.
+    """
+
     user_ids = TaskCollaborator.objects.values_list("user", flat=True).distinct()
     for user_id in user_ids:
         send_single_task_reminder_email.delay(user_id)  # Trigger in parallel
@@ -104,6 +120,14 @@ def send_task_reminder_emails():
 
 @shared_task
 def send_single_task_reminder_email(user_id):
+    """
+    Sends a daily task reminder email to a user with their pending, in-progress, or overdue tasks grouped by project.
+    Args:
+        user_id (int): The ID of the user to whom the reminder email will be sent.
+    Returns:
+        None
+    """
+
     from django.core.mail import EmailMultiAlternatives
     from django.template.loader import render_to_string
     from django.utils import timezone

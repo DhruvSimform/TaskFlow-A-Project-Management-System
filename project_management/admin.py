@@ -4,16 +4,22 @@ from .models import Project, ProjectCollaborator
 
 
 class ProjectCollaboratorInline(admin.TabularInline):
+    """
+    Inline admin class for managing ProjectCollaborator instances within the Project admin interface.
+    """
+
     model = ProjectCollaborator
     extra = 1
-    autocomplete_fields = [
-        "user"
-    ]  # Optional: makes user selection easier if many users
-    readonly_fields = ["addeed_at"]  # You can remove this if you want to edit it
+    autocomplete_fields = ["user"]
+    readonly_fields = ["addeed_at"]
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for managing Project model in the Django admin interface.
+    """
+
     list_display = ("name", "status", "created_by", "updated_by", "is_deleted")
     search_fields = ("name", "description")
     readonly_fields = ("created_by", "updated_by")

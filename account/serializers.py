@@ -46,11 +46,15 @@ class ResetPasswordSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
-    def validate(self, attrs):
-        if self.password1 != self.password2:
+    def validate(self, data):
+        if data["password1"] != data["password2"]:
             raise ValueError("Both password should be same")
-        return super().validate(attrs)
+        return super().validate(data)
 
 
 class RequestResetPasswordSerializer(serializers.Serializer):
+    """
+    Serializer for handling password reset requests via email.
+    """
+
     email = serializers.EmailField(required=True)

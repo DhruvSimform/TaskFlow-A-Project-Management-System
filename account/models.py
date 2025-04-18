@@ -8,6 +8,10 @@ from .manager import CustomeUserManager
 
 
 def email_only_gmail(value):
+    """
+    Validate that the given email address ends with '@gmail.com'.
+    """
+
     if not value.endswith("@gmail.com"):
         raise ValidationError("only Gmail Address are Allowed")
 

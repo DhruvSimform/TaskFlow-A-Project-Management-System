@@ -8,6 +8,10 @@ from .tasks import send_task_collaborator_email_celery
 
 @receiver(post_save, sender=TaskCollaborator)
 def notify_collaborator(sender, instance, created, **kwargs):
+    """
+    Sends an email notification to a task collaborator when a new collaborator is added.
+    """
+
     if created:
         send_task_collaborator_email_celery.delay(
             task_id=instance.task.id,

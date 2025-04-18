@@ -166,18 +166,18 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
+        # "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
         # "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "5/minite",  # anonymous users
+        # "anon": "500/minite",  # anonymous users
         # 'user': '2000/day',  # authenticated users
-        "login_min": "5/minute",
-        "login_hour": "50/hour",
-        "refresh": "5/minute",
-        "reset_password": "3/minute",
-        "change_password": "5/minute",
+        "login_min": "500/minute",
+        "login_hour": "5000/hour",
+        "refresh": "50/minute",
+        "reset_password": "30/minute",
+        "change_password": "50/minute",
     },
 }
 

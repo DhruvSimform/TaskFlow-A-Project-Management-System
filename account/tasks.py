@@ -5,6 +5,10 @@ from django.template.loader import render_to_string
 
 @shared_task
 def send_password_reset_email(email, reset_link):
+    """
+    Sends a password reset email with a reset link to the specified recipient.
+    """
+
     subject = "Reset Your Password - TaskFlow"
     from_email = "no-reply@taskflow.com"
     to_email = [email]

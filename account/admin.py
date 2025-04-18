@@ -5,6 +5,11 @@ from .models import CustomUser
 
 
 class CustomUserAdmin(UserAdmin):
+    """
+    CustomUserAdmin class customizes the Django admin interface for the User model,
+    allowing management of user-related fields and permissions.
+    """
+
     list_display = (
         "email",
         "first_name",
@@ -23,7 +28,7 @@ class CustomUserAdmin(UserAdmin):
             "Personal Info",
             {"fields": ("first_name", "last_name", "role", "profile_img")},
         ),
-        ("Department", {"fields": ("department",)}),  # ✅ Fixed the tuple issue
+        ("Department", {"fields": ("department",)}),
         ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
     )
 

@@ -4,6 +4,10 @@ from account.models import CustomUser
 
 
 class DataTimeMixIn(models.Model):
+    """
+    Abstract model mixin to add created_at and updated_at timestamp fields.
+    """
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

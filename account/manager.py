@@ -2,6 +2,9 @@ from django.contrib.auth.models import BaseUserManager
 
 
 class CustomeUserManager(BaseUserManager):
+    """
+    Custom user manager for handling user creation and superuser creation with email and additional fields.
+    """
 
     def create_user(self, email, password=None, **extra_fields):
         """Create a Normal user with email and password"""

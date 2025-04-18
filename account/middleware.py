@@ -15,7 +15,26 @@ logger = logging.getLogger(__name__)
 
 class AuthMiddleware(MiddlewareMixin):
     """
-    Middleware to enforce user authentication for accessing URLs, except for predefined routes.
+    AuthMiddleware is a custom Django middleware that enforces user authentication for incoming requests.
+
+    This middleware performs the following tasks:
+    1. Logs the IP address, user agent, and request path for every incoming request.
+    2. Allows requests to predefined routes (e.g., login, token verification, password reset) to bypass authentication.
+    3. Extracts and validates the Bearer token from the Authorization header for protected routes.
+    4. Checks if the token is blacklisted using a Redis cache.
+    5. Redirects unauthenticated web/admin users to the login page, while allowing unauthenticated API requests to proceed.
+
+    Key Features:
+    - Supports both web and API authentication flows.
+    - Ensures secure access by validating tokens and preventing the use of blacklisted tokens.
+    - Provides flexibility by allowing specific routes to bypass authentication.
+
+    Attributes:
+    - allowed_routes: A list of predefined routes that do not require authentication.
+
+    Methods:
+    - __call__: Logs request metadata and delegates processing to the parent middleware.
+    - process_request: Handles the core authentication logic, including token validation and route-based access control.
     """
 
     def __call__(self, request):
@@ -27,15 +46,6 @@ class AuthMiddleware(MiddlewareMixin):
         return super().__call__(request)
 
     def process_request(self, request):
-        """
-        Handles authentication and token validation for incoming requests.
-
-        This method checks if the request path is in the list of allowed routes that
-        do not require authentication. If the request contains an Authorization header
-        with a Bearer token, it validates the token and checks if it is blacklisted.
-        For unauthenticated users, it redirects to the login page for web/admin requests
-        or allows API requests to proceed without authentication.
-        """
 
         allowed_routes = [
             "/api/account/login/",

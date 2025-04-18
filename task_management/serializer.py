@@ -22,6 +22,10 @@ class TaskCollaboratorSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Task model, handling creation, validation, and nested data for subtasks and collaborators.
+    """
+
     subtask = serializers.SerializerMethodField()
     collaborators = serializers.SerializerMethodField()
     also_collaborator = serializers.BooleanField(write_only=True, required=False)
@@ -47,6 +51,11 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
+        """
+        Creates a new task, assigns collaborators based on provided email addresses,
+        and optionally adds the creator as a collaborator.
+        """
+
         request_user = self.context[
             "request"
         ].user  # Trigger background tasks after saving the model

@@ -109,6 +109,10 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(TaskCollaborator)
 class TaskCollaboratorAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for managing TaskCollaborator model in the Django admin interface.
+    """
+
     list_display = ("user", "task", "added_by", "added_at")
     search_fields = ("user__email", "task__title", "added_by__email")
     readonly_fields = ("added_at",)
