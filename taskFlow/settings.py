@@ -173,11 +173,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # "anon": "500/minite",  # anonymous users
         # 'user': '2000/day',  # authenticated users
-        "login_min": "500/minute",
-        "login_hour": "5000/hour",
-        "refresh": "50/minute",
-        "reset_password": "30/minute",
-        "change_password": "50/minute",
+        "login_min": "10/minute",
+        "login_hour": "100/hour",
+        "refresh": "20/minute",
+        "reset_password": "10/minute",
+        "change_password": "20/minute",
     },
 }
 

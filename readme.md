@@ -59,7 +59,7 @@ Task-Flow is a role-based project and task management system developed using Dja
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/task-flow.git
+git git@github.com:DhruvSimform/TaskFlow-A-Project-Management-System.git
 cd Task-Flow
 ```
 
@@ -80,10 +80,34 @@ pip install -r requirements.txt
 Create a .env file in the root directory:
 
 ```env
-SECRET_KEY=your-django-secret-key
-DEBUG=True
-REDIS_URL=redis://localhost:6379
-ALLOWED_HOSTS=127.0.0.1,localhost
+# Project Setup keys
+DJANGO_SECRET_KEY = 'your_django_secret_key'
+
+# PostgreSQL Configurations 
+DATABASE_NAME = 'TaskFlow'
+DATABASE_USER = 'your_database_user'
+DATABASE_PASSWORD = 'your_database_password'
+DATABASE_HOST = 'localhost'
+DATABASE_PORT = '5432'
+
+# JWT Configuration
+ACCESS_TOKEN_LIFETIME_MIN = 30 
+REFRESH_TOKEN_LIFETIME_HRS = 2 
+ROTATE_REFRESH_TOKENS = True
+BLACKLIST_AFTER_ROTATION = True
+
+# Redis Location
+RESISH_LOCATION = 'redis://127.0.0.1:6379/1'
+
+# Email
+EMAIL_HOST_USER = 'your_email@example.com'
+EMAIL_HOST_PASSWORD = 'your_email_password'
+
+# Cloudinary
+CLOUD_NAME = 'your_cloud_name'
+API_KEY = 'your_api_key'
+API_SECRET = 'your_api_secret'
+
 ```
 
 ### 5. Run migrations
@@ -116,6 +140,7 @@ celery -A taskFlow worker --loglevel=info
 ### 3. Start Celery Beat Scheduler
 
 ```bash
+```bash
 celery -A taskFlow beat --loglevel=info
 ```
 
@@ -123,18 +148,42 @@ celery -A taskFlow beat --loglevel=info
 
 | Endpoint | Method | Role | Description |
 |----------|--------|------|-------------|
-| /api/login/ | POST | All | Login to get tokens |
-| /api/logout/ | POST | All | Logout and blacklist tokens |
-| /api/token/refresh/ | POST | All | Refresh access token |
-| /api/change-password/ | POST | Authenticated | Change current user's password |
-| /api/users/ | POST | Admin | Create users |
-| /api/departments/ | POST | Admin | Create departments |
-| /api/projects/ | POST | Admin/Manager | Create projects |
-| /api/tasks/ | POST | Admin/Manager | Create tasks |
-| /api/tasks/{id}/status/ | PATCH | Developer | Update task status |
-| /api/tasks/overdue/ | GET | System | Automated (by Celery Beat) |
+| /api/account/login/ | POST | All | Login to get tokens |
+| /api/account/logout/ | POST | All | Logout and blacklist tokens |
+| /api/account/token/refresh/ | POST | All | Refresh access token |
+| /api/account/change-password/ | POST | Authenticated | Change current user's password |
+| /api/account/request-reset-password/ | POST | All | Request password reset |
+| /api/account/request-reset-password/{uidb64}/{token}/ | POST | All | Confirm password reset |
+| /api/account/profile-pic/ | PUT | Authenticated | Update profile picture |
+| /api/account/ | GET | Authenticated | Get dashboard details |
+| /api/organization/users/ | GET, POST | Admin | View all users or create a new user |
+| /api/organization/users/{email}/ | GET, PUT | Admin | Retrieve or update a user by email |
+| /api/organization/departments/ | GET, POST | Admin | View all departments or create a new department |
+| /api/organization/departments/{id}/ | GET, PUT | Admin | Retrieve or update a department by ID |
+| /api/project_management/ | GET, POST | Admin, Manager | List all projects or create a new project |
+| /api/project_management/projects/{id}/ | GET, PUT, DELETE | Admin, Collaborator | Retrieve, update, or delete a specific project |
+| /api/project_management/projects/{id}/collaborators/{email}/ | POST | Admin, Manager | Add a collaborator to a specific project |
+| /api/project/tasks/ | GET, POST | Admin, Manager, Collaborator | List all tasks or create a new task |
+| /api/project/tasks/{id}/ | GET, PUT, DELETE | Admin, Manager, Collaborator | Retrieve, update, or delete a specific task |
+| /api/project/tasks/{id}/subtasks/ | GET, POST | Admin, Manager, Collaborator | List or create subtasks for a specific task |
+| /api/project/tasks/{id}/collaborators/{email}/ | POST | Admin, Manager | Add a collaborator to a specific task |
 
-⚠️ More routes and detailed descriptions can be added if Swagger or DRF-YASG is integrated.
+
+### 🔍 Filtering, Searching, and Ordering
+
+The following APIs support filtering, searching, and ordering:
+
+#### **Project Management**
+- **Endpoint**: `/api/project_management/projects/`
+    - **Filterable Fields**: `status`
+    - **Searchable Fields**: `name`, `description`
+    - **Orderable Fields**: `updated_at`, `status`
+
+#### **Task Management**
+- **Endpoint**: `/api/project/<int:project_id>/tasks/`
+    - **Filterable Fields**: `status`, `priority`, `project`, `created_by`
+    - **Searchable Fields**: `title`, `description`, `project__name`, `status`, `priority`
+    - **Orderable Fields**: `start_date`, `due_date`, `priority`, `status`, `title`
 
 ## 🧩 Project Structure
 
@@ -153,7 +202,7 @@ Task-Flow/
 
 ## 🌍 Deployment
 
-- Use PostgreSQL or MySQL for production
+- Use PostgreSQL for production
 - Set DEBUG=False in .env
 - Configure Gunicorn + Nginx
 - Use Docker (optional but recommended)
