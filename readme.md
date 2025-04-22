@@ -218,5 +218,5 @@ MIT License © 2025
 
 ## 🙌 Acknowledgements
 
-Built with ❤️ by [Your Name]
+Built with ❤️ by Dhruv Patel
 Inspired by real-world task & project management needs.
