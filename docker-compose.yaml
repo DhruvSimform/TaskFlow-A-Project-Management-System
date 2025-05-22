@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:latest
+    container_name: database
+    ports:
+      - "15432:5432"
+    networks:
+      - task_flow
+      - postgres-network
+    volumes:
+      - task_flow:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d task_flow"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "15434:6379"
+    networks:
+      - task_flow
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   container_name: pgadmin
+  #   ports:
+  #     - "15433:80"
+  #   networks:
+  #     - postgres-network
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@example.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
+  #   volumes:
+  #     - task_flow:/var/lib/pgadmin
+
+  task_flow_app:
+    build:
+      context: .
+    container_name: task_flow_app
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    networks:
+      - task_flow
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health/ || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 10s
+
+  celery_worker:
+    build:
+      context: .
+    container_name: celery_worker
+    command: ["uv", "run", "celery", "-A", "taskFlow", "worker", "--loglevel=info"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      # task_flow_app:
+      #   condition: service_healthy
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      DJANGO_SETTINGS_MODULE: taskFlow.settings
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - task_flow
+
+  celery_beat:
+    build:
+      context: .
+    container_name: celery_beat
+    command: uv run celery -A taskFlow beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      # task_flow_app:
+      #   condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      DJANGO_SETTINGS_MODULE: taskFlow.settings
+    networks:
+      - task_flow
+
+networks:
+  task_flow:
+  postgres-network:
+
+volumes:
+  task_flow:
