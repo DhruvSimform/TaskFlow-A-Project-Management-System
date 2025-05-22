@@ -11,11 +11,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
+# Load environment variables from .env
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+CORS_ALLOW_ALL_ORIGINS = True  # Use this only for development
+
+
 load_dotenv()
 
 
@@ -32,23 +36,36 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
+    "rest_framework_simplejwt",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "cloudinary_storage",
+    "cloudinary",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "django_filters",
+    "account",  # app
+    "organization",  # app
+    "django_celery_beat",
+    # "guardian",
+    "project_management",  # app
+    "task_management",
 ]
 
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,6 +73,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Middleware to enforce authentication for all requests except specified URLs
+    "account.middleware.AuthMiddleware",
 ]
 
 ROOT_URLCONF = "taskFlow.urls"
@@ -85,11 +104,11 @@ WSGI_APPLICATION = "taskFlow.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "TaskFlow",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "localhost",  # Set to '127.0.0.1' or your server IP
-        "PORT": "5432",  # Default PostgreSQL port
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "PORT": os.getenv("DATABASE_PORT"),
     }
 }
 
@@ -118,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -134,3 +153,122 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Custom Authentication User Model
+AUTH_USER_MODEL = "account.CustomUser"
+
+
+# JWT Authentication
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_THROTTLE_CLASSES": [
+        # "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+        # "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        # "anon": "500/minite",  # anonymous users
+        # 'user': '2000/day',  # authenticated users
+        "login_min": "10/minute",
+        "login_hour": "100/hour",
+        "refresh": "20/minute",
+        "reset_password": "10/minute",
+        "change_password": "20/minute",
+    },
+}
+
+# django-guardian backend setup
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",  # default
+    "guardian.backends.ObjectPermissionBackend",
+)
+
+# JWT Settings
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME_MIN"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        hours=int(os.getenv("REFRESH_TOKEN_LIFETIME_HRS"))
+    ),
+    "ROTATE_REFRESH_TOKENS": os.getenv("ROTATE_REFRESH_TOKENS"),
+    "BLACKLIST_AFTER_ROTATION": os.getenv("BLACKLIST_AFTER_ROTATION"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
+# Redish
+# Redis cache setup for Docker environment
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("CELERY_CACHES"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Kolkata"
+
+# Prevent Django from launching Celery multiple times in development
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# Use Mailer for email queuing
+EMAIL_BACKEND = "mailer.backend.DbBackend"
+
+# Configure Email (SMTP example)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+
+# Cloud storage
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUD_NAME"),
+    "API_KEY": os.getenv("API_KEY"),
+    "API_SECRET": os.getenv("API_SECRET"),
+}
+
+MEDIA_URL = "/media/"  # or any prefix you choose
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "general.log",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+        }
+    },
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} ({levelname})- {name}- {message}",
+            "style": "{",
+        }
+    },
+}
